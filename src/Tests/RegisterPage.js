@@ -26,9 +26,23 @@ const validationSchema = Yup.object({
   email: Yup.string()
     .email("Invalid email format")
     .required("This field is required"),
+
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
-    .required("This field is required"),
+    .required("This field is required")
+    .matches(
+      /^(?=.*[a-z])/, // حرف صغير
+      "The password must contain at least one lowercase letter."
+    )
+    .matches(
+      /^(?=.*[A-Z])/, // حرف كبير
+      "The password must contain at least one uppercase letter."
+    )
+    .matches(
+      /^(?=.*\W)/, // رمز
+      "The password must contain at least one symbol."
+    ),
+
   country_id: Yup.string().required("This field is required"),
   currency_id: Yup.string().required("This field is required"),
   timezone_id: Yup.string().required("This field is required"),
