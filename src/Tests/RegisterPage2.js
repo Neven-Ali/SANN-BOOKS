@@ -10,11 +10,17 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import AddIcon from "@mui/icons-material/Add"; // استيراد أيقونة الإضافة
+import { useNavigate } from "react-router-dom"; // استيراد useNavigate
 
 // تعريف schema للتحقق من صحة البيانات باستخدام Yup
 const validationSchema = Yup.object({
@@ -81,6 +87,8 @@ const RegisterPage2 = () => {
   const [plans, setPlans] = useState([]);
   const [prices, setPrices] = useState([]);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false); // حالة جديدة لتتبع ظهور الحقول الإضافية
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false); // حالة إدارة ظهور الشاشة المنبثقة
+  const navigate = useNavigate(); // استخدام useNavigate للانتقال بين الصفحات
 
   const formik = useFormik({
     initialValues: {
@@ -107,8 +115,28 @@ const RegisterPage2 = () => {
       postal_code: "", // إضافة الحقل الجديد
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log("Form Data:", values);
+    onSubmit: async (values) => {
+      try {
+        // إرسال البيانات إلى الخادم
+        const response = await axios.post(
+          "https://books.sann-erp.com/api/auth/register",
+          values,
+          {
+            headers: {
+              "x-api-key": "SANN_BOOKS",
+            },
+          }
+        );
+
+        // إذا كان الرد ناجحًا
+        if (response.data.success) {
+          setOpenSuccessDialog(true); // فتح الشاشة المنبثقة
+        } else {
+          console.error("Failed to register:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+      }
     },
   });
 
@@ -292,29 +320,12 @@ const RegisterPage2 = () => {
       setPrices([]);
     }
   }, [formik.values.plan_id, plans]);
-  useEffect(() => {
-    if (formik.values.country_id && formik.values.country_state_id) {
-      const selectedCountry = countries.find(
-        (country) => country.id === formik.values.country_id
-      );
+  // إغلاق الشاشة المنبثقة والانتقال إلى صفحة التحقق من البريد الإلكتروني
+  const handleNavigateToVerification = () => {
+    setOpenSuccessDialog(false); // إغلاق الشاشة المنبثقة
+    navigate("/verify-email"); // الانتقال إلى صفحة التحقق من البريد الإلكتروني
+  };
 
-      if (selectedCountry) {
-        const selectedState = selectedCountry.country_states.find(
-          (state) => state.id === formik.values.country_state_id
-        );
-
-        if (selectedState) {
-          formik.setFieldValue("postal_code", selectedState.zip_code);
-        } else {
-          formik.setFieldValue("postal_code", "");
-        }
-      } else {
-        formik.setFieldValue("postal_code", "");
-      }
-    } else {
-      formik.setFieldValue("postal_code", "");
-    }
-  }, [formik.values.country_id, formik.values.country_state_id, countries]);
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
@@ -790,6 +801,31 @@ const RegisterPage2 = () => {
           </Button>
         </Box>
       </form>
+
+      {/* شاشة منبثقة لعرض رسالة النجاح */}
+      <Dialog
+        open={openSuccessDialog}
+        onClose={() => setOpenSuccessDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>تم التسجيل بنجاح!</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            تم تسجيل حسابك بنجاح. يرجى التحقق من بريدك الإلكتروني لإكمال عملية
+            التسجيل.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleNavigateToVerification}
+            color="primary"
+            variant="contained"
+          >
+            الانتقال إلى التحقق من البريد الإلكتروني
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

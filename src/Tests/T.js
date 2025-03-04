@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Switch, FormControlLabel } from "@mui/material";
+import { Switch, FormControlLabel, IconButton } from "@mui/material";
 import {
   Container,
   Typography,
@@ -14,6 +14,7 @@ import {
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import AddIcon from "@mui/icons-material/Add"; // استيراد أيقونة الإضافة
 
 // تعريف schema للتحقق من صحة البيانات باستخدام Yup
 const validationSchema = Yup.object({
@@ -28,11 +29,24 @@ const validationSchema = Yup.object({
     .required("This field is required"),
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
-    .required("This field is required"),
+    .required("This field is required")
+    .matches(
+      /^(?=.*[a-z])/, // حرف صغير
+      "The password must contain at least one lowercase letter."
+    )
+    .matches(
+      /^(?=.*[A-Z])/, // حرف كبير
+      "The password must contain at least one uppercase letter."
+    )
+    .matches(
+      /^(?=.*\W)/, // رمز
+      "The password must contain at least one symbol."
+    ),
+
   country_id: Yup.string().required("This field is required"),
   country_state_id: Yup.string().required("This field is required"),
   currency_id: Yup.string().required("This field is required"),
-  timezone_id: Yup.string().required("This field is required"),
+  time_zone_id: Yup.string().required("This field is required"),
   registered_for_vat: Yup.boolean(),
   tax_registration_number_label: Yup.string().when("registered_for_vat", {
     is: true,
@@ -52,6 +66,9 @@ const validationSchema = Yup.object({
   plan_id: Yup.string().required("This field is required"),
   plan_price_id: Yup.string().required("This field is required"),
   plan_type: Yup.string().required("This field is required"),
+  street1: Yup.string(), // إضافة الحقل الجديد
+  street2: Yup.string(), // إضافة الحقل الجديد
+  city: Yup.string(), // إضافة الحقل الجديد
 });
 
 const RegisterPage2 = () => {
@@ -63,6 +80,7 @@ const RegisterPage2 = () => {
   const [states, setStates] = useState([]);
   const [plans, setPlans] = useState([]);
   const [prices, setPrices] = useState([]);
+  const [showAdditionalFields, setShowAdditionalFields] = useState(false); // حالة جديدة لتتبع ظهور الحقول الإضافية
 
   const formik = useFormik({
     initialValues: {
@@ -75,7 +93,7 @@ const RegisterPage2 = () => {
       country_id: "",
       country_state_id: "",
       currency_id: "",
-      timezone_id: "",
+      time_zone_id: "",
       registered_for_vat: false,
       tax_registration_number_label: "",
       tax_registration_number: "",
@@ -83,6 +101,10 @@ const RegisterPage2 = () => {
       plan_id: "",
       plan_price_id: "",
       plan_type: "",
+      street1: "", // إضافة الحقل الجديد
+      street2: "", // إضافة الحقل الجديد
+      city: "", // إضافة الحقل الجديد
+      postal_code: "", // إضافة الحقل الجديد
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -270,7 +292,29 @@ const RegisterPage2 = () => {
       setPrices([]);
     }
   }, [formik.values.plan_id, plans]);
+  useEffect(() => {
+    if (formik.values.country_id && formik.values.country_state_id) {
+      const selectedCountry = countries.find(
+        (country) => country.id === formik.values.country_id
+      );
 
+      if (selectedCountry) {
+        const selectedState = selectedCountry.country_states.find(
+          (state) => state.id === formik.values.country_state_id
+        );
+
+        if (selectedState) {
+          formik.setFieldValue("postal_code", selectedState.zip_code);
+        } else {
+          formik.setFieldValue("postal_code", "");
+        }
+      } else {
+        formik.setFieldValue("postal_code", "");
+      }
+    } else {
+      formik.setFieldValue("postal_code", "");
+    }
+  }, [formik.values.country_id, formik.values.country_state_id, countries]);
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
@@ -493,18 +537,18 @@ const RegisterPage2 = () => {
           )}
         </FormControl>
 
-        {/* حقل timezone_id */}
+        {/* حقل time_zone_id */}
         <FormControl fullWidth margin="normal">
           <InputLabel id="timezone-label">Timezone</InputLabel>
           <Select
             labelId="timezone-label"
-            id="timezone_id"
-            name="timezone_id"
-            value={formik.values.timezone_id}
+            id="time_zone_id"
+            name="time_zone_id"
+            value={formik.values.time_zone_id}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             error={
-              formik.touched.timezone_id && Boolean(formik.errors.timezone_id)
+              formik.touched.time_zone_id && Boolean(formik.errors.time_zone_id)
             }
             label="Timezone"
           >
@@ -514,9 +558,9 @@ const RegisterPage2 = () => {
               </MenuItem>
             ))}
           </Select>
-          {formik.touched.timezone_id && formik.errors.timezone_id && (
+          {formik.touched.time_zone_id && formik.errors.time_zone_id && (
             <Typography color="error" variant="body2">
-              {formik.errors.timezone_id}
+              {formik.errors.time_zone_id}
             </Typography>
           )}
         </FormControl>
@@ -602,6 +646,61 @@ const RegisterPage2 = () => {
           </>
         )}
 
+        {/* زر إضافة الحقول الإضافية */}
+        <Box display="flex" alignItems="center" mt={2}>
+          <IconButton
+            onClick={() => setShowAdditionalFields(!showAdditionalFields)}
+            color="primary"
+          >
+            <AddIcon />
+          </IconButton>
+          <Typography variant="body1">Add Address Fields</Typography>
+        </Box>
+
+        {/* الحقول الإضافية تظهر فقط إذا تم النقر على الزر */}
+        {showAdditionalFields && (
+          <>
+            {/* حقل street1 */}
+            <TextField
+              fullWidth
+              label="Street 1"
+              name="street1"
+              value={formik.values.street1}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.street1 && Boolean(formik.errors.street1)}
+              helperText={formik.touched.street1 && formik.errors.street1}
+              margin="normal"
+            />
+
+            {/* حقل street2 */}
+            <TextField
+              fullWidth
+              label="Street 2"
+              name="street2"
+              value={formik.values.street2}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.street2 && Boolean(formik.errors.street2)}
+              helperText={formik.touched.street2 && formik.errors.street2}
+              margin="normal"
+            />
+
+            {/* حقل city */}
+            <TextField
+              fullWidth
+              label="City"
+              name="city"
+              value={formik.values.city}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.city && Boolean(formik.errors.city)}
+              helperText={formik.touched.city && formik.errors.city}
+              margin="normal"
+            />
+          </>
+        )}
+
         {/* حقل plan_id */}
         <FormControl fullWidth margin="normal">
           <InputLabel id="plan-label">Plan</InputLabel>
@@ -674,8 +773,8 @@ const RegisterPage2 = () => {
             error={formik.touched.plan_type && Boolean(formik.errors.plan_type)}
             label="Plan Type"
           >
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
+            <MenuItem value="Monthly">Monthly</MenuItem>
+            <MenuItem value="Yearly">Yearly</MenuItem>
           </Select>
           {formik.touched.plan_type && formik.errors.plan_type && (
             <Typography color="error" variant="body2">
