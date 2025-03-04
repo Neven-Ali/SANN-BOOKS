@@ -81,6 +81,35 @@ const RegisterPage2 = () => {
   const [plans, setPlans] = useState([]);
   const [prices, setPrices] = useState([]);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false); // حالة جديدة لتتبع ظهور الحقول الإضافية
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const onSubmit = async (values) => {
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(
+        `https://books.sann-erp.com/api/auth/register`,
+        values,
+        {
+          headers: {
+            "x-api-key": "SANN_BOOKS",
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      alert(response.data.message || "Registration successful!");
+    } catch (error) {
+      console.error(
+        "Failed to register:",
+        error.response?.data || error.message
+      );
+      alert(
+        error.response?.data?.message ||
+          "Registration failed. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -107,9 +136,7 @@ const RegisterPage2 = () => {
       postal_code: "", // إضافة الحقل الجديد
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log("Form Data:", values);
-    },
+    onSubmit: onSubmit,
   });
 
   // جلب بيانات الدول
@@ -297,12 +324,12 @@ const RegisterPage2 = () => {
       const selectedCountry = countries.find(
         (country) => country.id === formik.values.country_id
       );
-  
+
       if (selectedCountry) {
         const selectedState = selectedCountry.country_states.find(
           (state) => state.id === formik.values.country_state_id
         );
-  
+
         if (selectedState) {
           formik.setFieldValue("postal_code", selectedState.zip_code);
         } else {
@@ -315,6 +342,7 @@ const RegisterPage2 = () => {
       formik.setFieldValue("postal_code", "");
     }
   }, [formik.values.country_id, formik.values.country_state_id, countries]);
+
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
@@ -785,8 +813,13 @@ const RegisterPage2 = () => {
 
         {/* زر الإرسال */}
         <Box mt={2}>
-          <Button type="submit" variant="contained" color="primary">
-            Submit
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </Box>
       </form>

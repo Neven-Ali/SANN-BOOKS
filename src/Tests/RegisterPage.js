@@ -46,7 +46,7 @@ const validationSchema = Yup.object({
   country_id: Yup.string().required("This field is required"),
   country_state_id: Yup.string().required("This field is required"),
   currency_id: Yup.string().required("This field is required"),
-  timezone_id: Yup.string().required("This field is required"),
+  time_zone_id: Yup.string().required("This field is required"),
   registered_for_vat: Yup.boolean(),
   tax_registration_number_label: Yup.string().when("registered_for_vat", {
     is: true,
@@ -93,7 +93,7 @@ const RegisterPage2 = () => {
       country_id: "",
       country_state_id: "",
       currency_id: "",
-      timezone_id: "",
+      time_zone_id: "",
       registered_for_vat: false,
       tax_registration_number_label: "",
       tax_registration_number: "",
@@ -104,6 +104,7 @@ const RegisterPage2 = () => {
       street1: "", // إضافة الحقل الجديد
       street2: "", // إضافة الحقل الجديد
       city: "", // إضافة الحقل الجديد
+      postal_code: "", // إضافة الحقل الجديد
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -291,7 +292,29 @@ const RegisterPage2 = () => {
       setPrices([]);
     }
   }, [formik.values.plan_id, plans]);
+  useEffect(() => {
+    if (formik.values.country_id && formik.values.country_state_id) {
+      const selectedCountry = countries.find(
+        (country) => country.id === formik.values.country_id
+      );
 
+      if (selectedCountry) {
+        const selectedState = selectedCountry.country_states.find(
+          (state) => state.id === formik.values.country_state_id
+        );
+
+        if (selectedState) {
+          formik.setFieldValue("postal_code", selectedState.zip_code);
+        } else {
+          formik.setFieldValue("postal_code", "");
+        }
+      } else {
+        formik.setFieldValue("postal_code", "");
+      }
+    } else {
+      formik.setFieldValue("postal_code", "");
+    }
+  }, [formik.values.country_id, formik.values.country_state_id, countries]);
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
@@ -514,18 +537,18 @@ const RegisterPage2 = () => {
           )}
         </FormControl>
 
-        {/* حقل timezone_id */}
+        {/* حقل time_zone_id */}
         <FormControl fullWidth margin="normal">
           <InputLabel id="timezone-label">Timezone</InputLabel>
           <Select
             labelId="timezone-label"
-            id="timezone_id"
-            name="timezone_id"
-            value={formik.values.timezone_id}
+            id="time_zone_id"
+            name="time_zone_id"
+            value={formik.values.time_zone_id}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             error={
-              formik.touched.timezone_id && Boolean(formik.errors.timezone_id)
+              formik.touched.time_zone_id && Boolean(formik.errors.time_zone_id)
             }
             label="Timezone"
           >
@@ -535,9 +558,9 @@ const RegisterPage2 = () => {
               </MenuItem>
             ))}
           </Select>
-          {formik.touched.timezone_id && formik.errors.timezone_id && (
+          {formik.touched.time_zone_id && formik.errors.time_zone_id && (
             <Typography color="error" variant="body2">
-              {formik.errors.timezone_id}
+              {formik.errors.time_zone_id}
             </Typography>
           )}
         </FormControl>
