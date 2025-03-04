@@ -297,12 +297,12 @@ const RegisterPage2 = () => {
       const selectedCountry = countries.find(
         (country) => country.id === formik.values.country_id
       );
-  
+
       if (selectedCountry) {
         const selectedState = selectedCountry.country_states.find(
           (state) => state.id === formik.values.country_state_id
         );
-  
+
         if (selectedState) {
           formik.setFieldValue("postal_code", selectedState.zip_code);
         } else {
@@ -773,8 +773,8 @@ const RegisterPage2 = () => {
             error={formik.touched.plan_type && Boolean(formik.errors.plan_type)}
             label="Plan Type"
           >
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
+            <MenuItem value="Monthly">Monthly</MenuItem>
+            <MenuItem value="Yearly">Yearly</MenuItem>
           </Select>
           {formik.touched.plan_type && formik.errors.plan_type && (
             <Typography color="error" variant="body2">

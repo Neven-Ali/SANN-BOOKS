@@ -801,8 +801,8 @@ const RegisterPage2 = () => {
             error={formik.touched.plan_type && Boolean(formik.errors.plan_type)}
             label="Plan Type"
           >
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
+            <MenuItem value="Monthly">Monthly</MenuItem>
+            <MenuItem value="Yearly">Yearly</MenuItem>
           </Select>
           {formik.touched.plan_type && formik.errors.plan_type && (
             <Typography color="error" variant="body2">
